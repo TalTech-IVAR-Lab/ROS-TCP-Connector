@@ -1,0 +1,24 @@
+name: Central Unity package automation pilot
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-package:
+    uses: TalTech-IVAR-Lab/ci-automation/.github/workflows/unity-package-ci.yml@8d168e2bd383da2c327fd40e8e13cbc247ee4643
+    with:
+      package-path: com.unity.robotics.ros-tcp-connector
+      allow-unity-package-name: true
+
+  analyze-release:
+    uses: TalTech-IVAR-Lab/ci-automation/.github/workflows/unity-package-release-dry-run.yml@8d168e2bd383da2c327fd40e8e13cbc247ee4643
+    with:
+      package-path: com.unity.robotics.ros-tcp-connector
+      allow-unity-package-name: true
