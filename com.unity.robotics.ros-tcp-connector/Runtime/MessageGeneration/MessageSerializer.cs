@@ -63,6 +63,12 @@ namespace Unity.Robotics.ROSTCPConnector.MessageGeneration
             m_LengthCorrection += m_AlignmentOffset;
             m_AlignmentOffset = 0; // header doesn't affect alignment
             message.SerializeTo(this);
+#if ROS2
+            // ROS 2 IDL represents an otherwise empty structure with one dummy byte.
+            // Generated empty message classes have no fields, so supply that byte here.
+            if (m_AlignmentOffset == 0)
+                Write((byte)0);
+#endif
         }
 
         public byte[] GetBytes()

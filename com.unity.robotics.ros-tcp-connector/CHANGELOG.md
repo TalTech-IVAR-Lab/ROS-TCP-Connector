@@ -22,6 +22,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Fixed
 
 
+## [0.8.0] - 2026-10-09
+
+### Upgrade Notes
+
+- Connection endpoints now come from a required `ROSConnectionConfig` asset assigned to each `ROSConnection`. Existing scenes and prefabs must create and assign this asset instead of writing `RosIPAddress` or `RosPort` directly.
+- Disconnect explicitly before assigning a different connection config. The config reference and endpoint fields are read-only in Play Mode.
+- The ROS-TCP wire protocol remains compatible with `v0.7.x`. The package still supports Unity 2020.2 and has been accepted with ROS 1 Noetic and ROS 2 Jazzy.
+
+### Added
+
+- Added deterministic regression coverage for connection-attempt ownership, worker startup and teardown, registration conflicts, frame parsing, reconnects, and configuration editor policy.
+- Added domain-lifetime cleanup so Play Mode and assembly reload teardown cannot leave connector workers or static registrations behind.
+
+### Changed
+
+- Made connection attempts own their workers, socket, callbacks, registrations, queues, and pooled messages through explicit disconnect and reconnect lifecycles.
+- Made topic and service registration deterministic and idempotent while rejecting incompatible duplicate declarations.
+- Moved connection error state to each `ROSConnection` instance and prevented stale attempts from publishing callbacks or changing current state.
+
+### Fixed
+
+- Fixed deliberate disconnect and Play Mode teardown being reported as transport failures while preserving diagnostics and reconnect behavior for genuine peer or network failures.
+- Fixed stale commands, duplicate callbacks, registration leakage, reconnect races, partial frame handling, and teardown hangs.
+- Fixed ROS 2 top-level empty-message serialization by emitting the required CDR dummy byte.
+
+
 ## [0.7.0-preview] - 2022-02-01
 
 ### Added

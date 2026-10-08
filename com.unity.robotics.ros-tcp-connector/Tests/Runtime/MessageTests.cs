@@ -112,6 +112,18 @@ namespace UnitTests
             Assert.AreEqual(inMsg.data, outMsg.data);
         }
 
+#if ROS2
+        [Test]
+        public void SerializeMessage_EmptyMessage_WritesCdrDummyByte()
+        {
+            var serializer = new MessageSerializer();
+
+            serializer.SerializeMessage(new TriggerRequest());
+
+            CollectionAssert.AreEqual(new byte[] { 0, 1, 0, 0, 0 }, serializer.GetBytes());
+        }
+#endif
+
         public T MessageRoundTrip<T>(T inMsg, Func<MessageDeserializer, T> deserialize) where T : Message
         {
             MessageSerializer ser = new MessageSerializer();

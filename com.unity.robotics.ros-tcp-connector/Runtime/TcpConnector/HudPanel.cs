@@ -124,6 +124,21 @@ namespace Unity.Robotics.ROSTCPConnector
             s_HeaderContents.Add(index, headerContent);
         }
 
+        internal static void UnregisterHeader(Action headerContent)
+        {
+            int? matchingIndex = null;
+            foreach (var pair in s_HeaderContents)
+            {
+                if (pair.Value == headerContent)
+                {
+                    matchingIndex = pair.Key;
+                    break;
+                }
+            }
+            if (matchingIndex.HasValue)
+                s_HeaderContents.Remove(matchingIndex.Value);
+        }
+
         public static void AddWindow(HudWindow window)
         {
             s_ActiveWindows.Add(window);
