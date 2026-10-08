@@ -15,4 +15,7 @@ jobs:
               with:
                   dotnet-version: '6.0.x'
                   include-prerelease: true
-            - uses: pre-commit/action@v2.0.0
+            - name: Run pre-commit
+              run: |
+                  python -m pip install --disable-pip-version-check pre-commit==4.6.2
+                  pre-commit run --all-files
