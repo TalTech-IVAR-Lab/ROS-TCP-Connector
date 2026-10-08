@@ -25,26 +25,50 @@ namespace Unity.Robotics.ROSTCPConnector
      */
     public class SysCommandSender : OutgoingMessageSender
     {
-        List<byte[]> m_ListOfSerializations;
+        readonly object m_Gate = new object();
+        readonly byte[] m_Bytes;
+        bool m_Cleared;
 
         public SysCommandSender(List<byte[]> listOfSerializations)
         {
-            m_ListOfSerializations = listOfSerializations;
+            if (listOfSerializations == null)
+                throw new System.ArgumentNullException(nameof(listOfSerializations));
+            long length = 0;
+            foreach (byte[] statement in listOfSerializations)
+            {
+                if (statement == null)
+                    throw new System.IO.IOException("A system command contains an unfinished segment.");
+                length = checked(length + statement.LongLength);
+            }
+            m_Bytes = new byte[checked((int)length)];
+            int offset = 0;
+            foreach (byte[] statement in listOfSerializations)
+            {
+                System.Buffer.BlockCopy(statement, 0, m_Bytes, offset, statement.Length);
+                offset += statement.Length;
+            }
         }
+
+        internal SysCommandSender(byte[] bytes)
+        {
+            m_Bytes = bytes ?? throw new System.ArgumentNullException(nameof(bytes));
+        }
+
+        internal byte[] FrozenBytes => m_Bytes;
 
         public override SendToState SendInternal(MessageSerializer m_MessageSerializer, Stream stream)
         {
-            foreach (byte[] statement in m_ListOfSerializations)
-            {
-                stream.Write(statement, 0, statement.Length);
-            }
-
+            byte[] bytes;
+            lock (m_Gate) bytes = m_Cleared ? null : m_Bytes;
+            if (bytes == null)
+                return SendToState.NoMessageToSendError;
+            stream.Write(bytes, 0, bytes.Length);
             return SendToState.Normal;
         }
 
         public override void ClearAllQueuedData()
         {
-            m_ListOfSerializations.Clear();
+            lock (m_Gate) m_Cleared = true;
         }
     }
 }

@@ -8,6 +8,9 @@ namespace Unity.Robotics.ROSTCPConnector
 {
     public interface IMessagePool
     {
+        // Connector handoff completes when this call RETURNS. Custom pools must not
+        // expose a root for reuse while AddMessage still accesses it. After handoff,
+        // callers must reacquire through their pool, never publish a stale raw alias.
         void AddMessage(Message messageToRecycle);
     }
 
@@ -49,8 +52,11 @@ namespace Unity.Robotics.ROSTCPConnector
         {
             T result;
 
-            if (!m_Contents.TryDequeue(out result))
+            if (!m_Contents.TryDequeue(out result) || MessageUseRegistry.IsReturning(result))
             {
+                // AddMessage enqueues before returning to the connector's recycler.
+                // Abandon a dequeued candidate still in that handoff window; neither
+                // wait for user code nor execute the T constructor under the registry gate.
                 result = new T();
             }
 

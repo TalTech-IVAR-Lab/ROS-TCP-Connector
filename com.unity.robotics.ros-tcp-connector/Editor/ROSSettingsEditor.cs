@@ -96,18 +96,36 @@ namespace Unity.Robotics.ROSTCPConnector.Editor
 
             EditorGUILayout.LabelField("Settings for a new ROSConnection.instance", EditorStyles.boldLabel);
 
-            prefab.RosIPAddress = EditorGUILayout.TextField("ROS IP Address", prefab.RosIPAddress);
-            prefab.RosPort = EditorGUILayout.IntField("ROS Port", prefab.RosPort);
-
-            // Also set the player prefs, for users who hit play in the editor: they will expect the last-used IP address to appear in the hud
-            ROSConnection.SetIPPref(prefab.RosIPAddress);
-            ROSConnection.SetPortPref(prefab.RosPort);
+            EditorGUI.BeginDisabledGroup(EditorApplication.isPlaying);
+            EditorGUI.BeginChangeCheck();
+            var selectedConfig = (ROSConnectionConfig)EditorGUILayout.ObjectField(
+                "Connection Config", prefab.ConnectionConfig, typeof(ROSConnectionConfig), false);
+            if (EditorGUI.EndChangeCheck())
+                prefab.ConnectionConfig = selectedConfig;
+            if (prefab.ConnectionConfig == null && GUILayout.Button("Create ROS Connection Config"))
+            {
+                string path = EditorUtility.SaveFilePanelInProject(
+                    "Create ROS Connection Config", "ROSConnectionConfig", "asset",
+                    "Choose where to save the ROS connection configuration.");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    var config = CreateInstance<ROSConnectionConfig>();
+                    AssetDatabase.CreateAsset(config, path);
+                    prefab.ConnectionConfig = config;
+                    EditorUtility.SetDirty(prefab);
+                }
+            }
+            EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.Space();
 
-            if (!ROSConnection.IPFormatIsCorrect(prefab.RosIPAddress))
+            if (prefab.ConnectionConfig == null)
             {
-                EditorGUILayout.HelpBox("ROS IP is invalid", MessageType.Warning);
+                EditorGUILayout.HelpBox("A ROS Connection Config asset is required.", MessageType.Warning);
+            }
+            else if (!prefab.ConnectionConfig.IsValid)
+            {
+                EditorGUILayout.HelpBox("The assigned ROS Connection Config is invalid.", MessageType.Warning);
             }
 
             EditorGUILayout.Space();
