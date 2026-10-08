@@ -24,9 +24,11 @@ repos:
             exclude: \.yamato/.*
 
 
-- repo: https://github.com/dotnet/format
-  rev: v5.1.225507
+- repo: local
   hooks:
       - id: dotnet-format
-        entry: dotnet-format whitespace
-        args: [--folder, --include]
+        name: dotnet-format
+        language: system
+        entry: dotnet format whitespace --folder --include --verify-no-changes
+        pass_filenames: false
+        types: [c#]
